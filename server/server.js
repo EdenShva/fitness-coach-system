@@ -5,6 +5,8 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 
+const testRoutes = require("./routes/testRoutes");
+
 const app = express();
 
 // חיבור למסד הנתונים
@@ -16,6 +18,7 @@ app.use(express.json());
 
 // routes
 app.use("/api/auth", authRoutes);
+app.use("/api/test", testRoutes);
 
 // בדיקת חיבור בסיסית
 app.get("/", (req, res) => {
