@@ -7,6 +7,8 @@ const authRoutes = require("./routes/authRoutes");
 
 const testRoutes = require("./routes/testRoutes");
 
+const coachRoutes = require("./routes/coachroutes");
+
 const app = express();
 
 // חיבור למסד הנתונים
@@ -19,6 +21,7 @@ app.use(express.json());
 // routes
 app.use("/api/auth", authRoutes);
 app.use("/api/test", testRoutes);
+app.use("/api/coach", coachRoutes);
 
 // בדיקת חיבור בסיסית
 app.get("/", (req, res) => {
