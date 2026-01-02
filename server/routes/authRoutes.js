@@ -9,10 +9,10 @@ const jwt = require("jsonwebtoken");
 // REGISTER – יצירת משתמש חדש
 router.post("/register", async (req, res) => {
   try {
-    const { username, password, role } = req.body;
+    const { username, email, password, role } = req.body;
 
     // בדיקות בסיסיות
-    if (!username || !password || !role) {
+    if (!username || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -28,6 +28,7 @@ router.post("/register", async (req, res) => {
     // יצירת משתמש חדש
     const newUser = new User({
       username,
+      email,
       password: hashedPassword,
       role,
     });
@@ -39,6 +40,7 @@ router.post("/register", async (req, res) => {
       user: {
         id: newUser._id,
         username: newUser.username,
+        email: newUser.email,
         role: newUser.role,
       },
     });
@@ -47,15 +49,15 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// LOGIN – נכתוב בשלב הבא
+// LOGIN 
 router.post("/login", async (req, res) => {
   try{
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!username || !password) {
+    if (!email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
