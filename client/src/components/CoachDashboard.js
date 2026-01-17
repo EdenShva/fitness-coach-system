@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 
 function CoachDashboard() {
   const [clients, setClients] = useState([]);
@@ -8,6 +10,14 @@ function CoachDashboard() {
   const [newName, setNewName] = useState("");
   const [newGoals, setNewGoals] = useState("");
   const [newNotes, setNewNotes] = useState("");
+
+  const navigate = useNavigate();
+    
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/"); // חזרה למסך ההתחברות
+  };
+
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -99,8 +109,12 @@ function CoachDashboard() {
   };
 
   return (
+
     <div style={{ padding: "16px" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
       <h2>לקוחות</h2>
+      <button onClick={handleLogout}>יציאה</button>
+    </div>
 
       {/* טופס יצירת לקוח חדש */}
       <div
