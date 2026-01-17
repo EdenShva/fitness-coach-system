@@ -1,11 +1,17 @@
-import Login from "./Login";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Login from "./components/Login";
+import CoachDashboard from "./components/CoachDashboard";
+import ClientDetails from "./components/ClientDetails";
 
 function App() {
   return (
-    <div>
-      <h1>Fitness Coach System</h1>
-      <Login />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/coach" element={<CoachDashboard />} />
+        <Route path="/clients/:id" element={<ClientDetails />} />
+      </Routes>
+    </Router>
   );
 }
 

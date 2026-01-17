@@ -23,6 +23,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/coach", coachRoutes);
 
+const clientRoutes = require("./routes/clientRoutes");
+app.use("/api/clients", clientRoutes);
+
 // בדיקת חיבור בסיסית
 app.get("/", (req, res) => {
   res.send("Server is running and connected to MongoDB");

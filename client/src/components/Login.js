@@ -28,7 +28,11 @@ function Login() {
       localStorage.setItem("token", data.token);
       console.log("TOKEN SAVED TO LOCAL STORAGE:", localStorage.getItem("token"));
 
-      setMessage("Login successful!");
+      // setMessage("Login successful!");
+
+      localStorage.setItem("token", data.token);
+      window.location.href = "/coach";
+
     } catch (error) {
       setMessage("Server error");
     }
