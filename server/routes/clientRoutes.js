@@ -81,4 +81,22 @@ router.put("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// מחיקת לקוח לפי id
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    const deletedClient = await Client.findOneAndDelete({
+      _id: req.params.id,
+      coach: req.user.userId, // לוודא שהמאמן מוחק רק לקוחות שלו
+    });
+
+    if (!deletedClient) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    res.json({ message: "Client deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting client:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
