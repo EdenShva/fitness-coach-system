@@ -18,22 +18,43 @@ function Login() {
       });
 
       const data = await response.json();
+      console.log("LOGIN RESPONSE:", data);
 
       if (!response.ok) {
         setMessage(data.message || "Login failed");
         return;
       }
 
-      console.log("TOKEN:", data.token);
-      localStorage.setItem("token", data.token);
-      console.log("TOKEN SAVED TO LOCAL STORAGE:", localStorage.getItem("token"));
+      // מצפים שיחזור:
+      // {
+      //   message: "Login successful",
+      //   token: "...",
+      //   user: { id, username, role }
+      // }
 
-      // setMessage("Login successful!");
+      if (!data.token || !data.user || !data.user.role) {
+        setMessage("Login response is missing token or role");
+        return;
+      }
 
-      localStorage.setItem("token", data.token);
-      window.location.href = "/coach";
+      const token = data.token;
+      const role = data.user.role;
 
+      // שמירת הנתונים לזיכרון בדפדפן
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+
+      // ניווט לפי תפקיד
+      if (role === "coach") {
+        window.location.href = "/coach";
+      } else if (role === "client") {
+        window.location.href = "/client";
+      } else {
+        // ליתר ביטחון
+        window.location.href = "/";
+      }
     } catch (error) {
+      console.error("Login error:", error);
       setMessage("Server error");
     }
   };

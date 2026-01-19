@@ -14,9 +14,11 @@ function CoachDashboard() {
   const navigate = useNavigate();
     
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/"); // חזרה למסך ההתחברות
-  };
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  window.location.href = "/";
+};
+
 
 
   useEffect(() => {

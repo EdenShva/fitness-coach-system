@@ -3,6 +3,8 @@ import Login from "./components/Login";
 import CoachDashboard from "./components/CoachDashboard";
 import ClientDetails from "./components/ClientDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ClientHome from "./components/ClientHome";
+
 
 
 function App() {
@@ -10,11 +12,11 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        
+
         <Route
           path="/coach"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["coach"]}>
               <CoachDashboard />
             </ProtectedRoute>
           }
@@ -23,12 +25,23 @@ function App() {
         <Route
           path="/clients/:id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["coach"]}>
               <ClientDetails />
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/client"
+          element={
+            <ProtectedRoute allowedRoles={["client"]}>
+              <ClientHome />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
+
     </Router>
   );
 }
