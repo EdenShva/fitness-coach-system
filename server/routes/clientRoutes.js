@@ -1,47 +1,92 @@
 const express = require("express");
 const router = express.Router();
+const bcrypt = require("bcryptjs");
+
 const Client = require("../models/Client");
+const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // יצירת לקוח חדש
+// POST /api/clients  (Coach creates a client + optional login user)
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { name, goals, notes } = req.body;
+    // לוודא שרק מאמן יכול ליצור לקוחות
+    if (req.user.role !== "coach") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const { name, goals, notes, username, password } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: "Name is required" });
     }
 
-    const newClient = new Client({
+    // אם מתחילים ליצור משתמש לוגין – חייבים גם username וגם password
+    if ((username && !password) || (!username && password)) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "If you want to create a login for the client, please provide BOTH username and password",
+        });
+    }
+
+    let createdUser = null;
+
+    if (username && password) {
+      // לבדוק שאין כבר משתמש כזה
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      createdUser = await User.create({
+        username,
+        password: hashedPassword,
+        role: "client",
+        goalsText: "", // אפשר להשאיר ריק בשלב הראשון
+      });
+    }
+
+    const newClient = await Client.create({
       name,
       goals: goals || "",
       notes: notes || "",
       coach: req.user.userId, // המאמן מתוך הטוקן
+      user: createdUser ? createdUser._id : undefined, // 👈 הקישור החשוב ל-User
     });
 
-    await newClient.save();
     res.status(201).json(newClient);
-
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error creating client:", error);
+    res.status(500).json({ message: error.message || "Server error" });
   }
 });
 
 // קבלת כל הלקוחות של המאמן
 router.get("/", authMiddleware, async (req, res) => {
   try {
+    if (req.user.role !== "coach") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const clients = await Client.find({ coach: req.user.userId });
     res.json(clients);
   } catch (error) {
+    console.error("Error getting clients:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-module.exports = router;
-
-// בקבלת לקוח לפי id
+// קבלת לקוח לפי id (Client id, לא User)
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
+    if (req.user.role !== "coach") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const client = await Client.findOne({
       _id: req.params.id,
       coach: req.user.userId, // לוודא שהמאמן רואה רק את הלקוחות שלו
@@ -53,21 +98,24 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
     res.json(client);
   } catch (error) {
+    console.error("Error getting client:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-
 // עדכון לקוח לפי id
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
+    if (req.user.role !== "coach") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const { name, goals, notes } = req.body;
 
-    // אפשר בהמשך להוסיף ולידציות, למשל: אם name ריק → שגיאה
     const updatedClient = await Client.findOneAndUpdate(
       { _id: req.params.id, coach: req.user.userId }, // רק לקוח של המאמן המחובר
       { name, goals, notes },
-      { new: true, runValidators: true } // new:true מחזיר את הלקוח המעודכן
+      { new: true, runValidators: true }
     );
 
     if (!updatedClient) {
@@ -84,9 +132,13 @@ router.put("/:id", authMiddleware, async (req, res) => {
 // מחיקת לקוח לפי id
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
+    if (req.user.role !== "coach") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const deletedClient = await Client.findOneAndDelete({
       _id: req.params.id,
-      coach: req.user.userId, // לוודא שהמאמן מוחק רק לקוחות שלו
+      coach: req.user.userId,
     });
 
     if (!deletedClient) {
@@ -100,3 +152,4 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+module.exports = router;

@@ -51,38 +51,42 @@ router.post("/register", async (req, res) => {
 
 // LOGIN 
 router.post("/login", async (req, res) => {
-  try{
-    const { email, password } = req.body;
+  try {
+    const { email, password } = req.body; 
+    // שדה email משמש כ-"Email or Username"
 
     if (!email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    const user = await User.findOne({ email });
+
+    // חיפוש לפי email או לפי username
+    const user = await User.findOne({
+      $or: [{ email }, { username: email }],
+    });
+
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
+
     const token = jwt.sign(
-      { userId: user._id, 
-        role: user.role,
-       },
+      { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
     res.json({
-      message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        username: user.username,
-        role: user.role,
-      },
+      role: user.role,
+      userId: user._id,
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

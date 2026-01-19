@@ -1,12 +1,13 @@
 import { useState } from "react";
 
 function Login() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState(""); // email OR username
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
 
     try {
       const response = await fetch("http://localhost:5000/api/auth/login", {
@@ -14,7 +15,9 @@ function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        // שולחים "email" כדי לא לשבור את השרת אצלך,
+        // אבל הוא בעצם Email or Username
+        body: JSON.stringify({ email: identifier, password }),
       });
 
       const data = await response.json();
@@ -25,32 +28,22 @@ function Login() {
         return;
       }
 
-      // מצפים שיחזור:
-      // {
-      //   message: "Login successful",
-      //   token: "...",
-      //   user: { id, username, role }
-      // }
+      const token = data.token;
+      const role = data.user?.role || data.role;
 
-      if (!data.token || !data.user || !data.user.role) {
+      if (!token || !role) {
         setMessage("Login response is missing token or role");
         return;
       }
 
-      const token = data.token;
-      const role = data.user.role;
-
-      // שמירת הנתונים לזיכרון בדפדפן
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
 
-      // ניווט לפי תפקיד
       if (role === "coach") {
         window.location.href = "/coach";
       } else if (role === "client") {
         window.location.href = "/client";
       } else {
-        // ליתר ביטחון
         window.location.href = "/";
       }
     } catch (error) {
@@ -66,10 +59,11 @@ function Login() {
       <form onSubmit={handleSubmit}>
         <div>
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"                  
+            placeholder="Email or Username"  
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            required
           />
         </div>
 
@@ -79,6 +73,7 @@ function Login() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
 
