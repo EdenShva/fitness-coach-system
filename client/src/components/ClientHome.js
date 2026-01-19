@@ -75,7 +75,7 @@ function ClientHome() {
     const data = await res.json();
 
     if (res.ok) {
-      setUser(data);
+      setUser(data); // כולל weeklyUpdates מעודכן
       setWeeklyWeight("");
       setWeeklyNote("");
       setMessage("Weekly update saved!");
@@ -89,6 +89,13 @@ function ClientHome() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     window.location.href = "/";
+  };
+
+  // פונקציה קטנה כדי להציג תאריך יפה
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    return d.toLocaleDateString("he-IL");
   };
 
   return (
@@ -117,7 +124,7 @@ function ClientHome() {
             </button>
           </div>
 
-          {/* Weekly update section */}
+          {/* Weekly update form */}
           <div style={{ marginTop: "20px", maxWidth: "600px" }}>
             <h3>Weekly Update</h3>
 
@@ -141,6 +148,27 @@ function ClientHome() {
             <button style={{ marginTop: "8px" }} onClick={handleWeeklySubmit}>
               Submit Weekly Update
             </button>
+          </div>
+
+          {/* Weekly history list */}
+          <div style={{ marginTop: "24px", maxWidth: "600px" }}>
+            <h3>Weekly History</h3>
+            {user.weeklyUpdates && user.weeklyUpdates.length > 0 ? (
+              <ul>
+                {user.weeklyUpdates
+                  .slice() // שלא נשנה את המערך המקורי
+                  .sort((a, b) => new Date(b.date) - new Date(a.date)) // מהחדש לישן
+                  .map((item, index) => (
+                    <li key={item._id || index} style={{ marginBottom: "8px" }}>
+                      <strong>{formatDate(item.date)}:</strong>{" "}
+                      {item.weight ? `${item.weight} kg` : "No weight"}{" "}
+                      {item.note ? `– ${item.note}` : ""}
+                    </li>
+                  ))}
+              </ul>
+            ) : (
+              <p>No weekly updates yet.</p>
+            )}
           </div>
 
           {message && <p>{message}</p>}
