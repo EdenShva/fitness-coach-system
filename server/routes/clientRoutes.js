@@ -44,10 +44,13 @@ router.post("/", authMiddleware, async (req, res) => {
 
       createdUser = await User.create({
         username,
+        // אימייל פיקטיבי, ייחודי לפי שם המשתמש
+        email: `${username}@virtual-client.local`,
         password: hashedPassword,
         role: "client",
-        goalsText: "", // אפשר להשאיר ריק בשלב הראשון
+        goalsText: "",
       });
+
     }
 
     const newClient = await Client.create({

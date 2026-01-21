@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function CoachDashboard() {
   const [clients, setClients] = useState([]);
@@ -10,9 +9,10 @@ function CoachDashboard() {
   const [newName, setNewName] = useState("");
   const [newGoals, setNewGoals] = useState("");
   const [newNotes, setNewNotes] = useState("");
+
+  // שדות ליצירת משתמש לוגין ללקוח
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-
 
   const navigate = useNavigate();
 
@@ -55,6 +55,7 @@ function CoachDashboard() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    setMessage("");
 
     try {
       const token = localStorage.getItem("token");
@@ -69,8 +70,8 @@ function CoachDashboard() {
           name: newName,
           goals: newGoals,
           notes: newNotes,
-          username: newUsername,
-          password: newPassword,
+          username: newUsername || undefined,
+          password: newPassword || undefined,
         }),
       });
 
@@ -89,6 +90,9 @@ function CoachDashboard() {
       setNewName("");
       setNewGoals("");
       setNewNotes("");
+      setNewUsername("");
+      setNewPassword("");
+
       setMessage("Client created successfully");
     } catch (error) {
       console.error("Error creating client:", error);
@@ -180,24 +184,33 @@ function CoachDashboard() {
             />
           </div>
 
+          <hr style={{ margin: "8px 0" }} />
+
+          <p style={{ fontSize: "0.9rem" }}>
+            (אופציונלי) יצירת משתמש לוגין ללקוח:
+          </p>
+
           <div>
-            <label>שם משתמש ללקוח:</label><br />
+            <label>שם משתמש ללקוח:</label>
+            <br />
             <input
               type="text"
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
+              placeholder="client username"
             />
           </div>
 
           <div>
-            <label>סיסמה ללקוח:</label><br />
+            <label>סיסמה ללקוח:</label>
+            <br />
             <input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="client password"
             />
           </div>
-
 
           <button type="submit" style={{ marginTop: "8px" }}>
             שמירת לקוח
@@ -212,12 +225,11 @@ function CoachDashboard() {
       ) : (
         <ul>
           {clients.map((client) => {
-            // 👇 כאן הקסם: ננסה קודם user / userId, ואם אין – נשתמש ב-_id
+            // אם יש קישור ל-User – נשתמש בו; אחרת נשתמש ב-_id
             const clientUserId = client.user || client.userId || client._id;
 
             return (
               <li key={client._id} style={{ marginBottom: "8px" }}>
-                {/* ניווט למסך פרטי לקוח */}
                 <Link to={`/clients/${clientUserId}`}>{client.name}</Link>{" "}
                 <button onClick={() => handleDelete(client._id)}>מחיקה</button>
               </li>
