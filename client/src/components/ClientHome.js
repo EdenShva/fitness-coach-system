@@ -109,6 +109,18 @@ function ClientHome() {
         <>
           <p>Welcome, {user.username}</p>
 
+          {/* Training & Nutrition Plans from Coach */}
+          <div style={{ marginTop: "16px", maxWidth: "600px" }}>
+            <h3>Training Plan</h3>
+            <p>{user.trainingPlan || "Your coach hasn't set a training plan yet."}</p>
+          </div>
+
+          <div style={{ marginTop: "16px", maxWidth: "600px" }}>
+            <h3>Nutrition Plan</h3>
+            <p>{user.nutritionPlan || "Your coach hasn't set a nutrition plan yet."}</p>
+          </div>
+
+
           {/* Goals section */}
           <div style={{ marginTop: "16px", maxWidth: "600px" }}>
             <h3>Goals / Feedback</h3>

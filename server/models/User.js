@@ -22,7 +22,16 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
 
-  // טקסט חופשי של מטרות / פידבק
+    trainingPlan: {
+    type: String,
+    default: "",
+  },
+
+  nutritionPlan: {
+    type: String,
+    default: "",
+  },
+
   goalsText: {
     type: String,
     default: "",

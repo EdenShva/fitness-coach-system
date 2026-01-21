@@ -69,15 +69,56 @@ router.get("/client/:id/weekly-updates", authMiddleware, async (req, res) => {
     if (!client) return res.status(404).json({ message: "Client not found" });
 
     // MVP פשוט: המאמן יכול לראות כל לקוח (אח"כ אפשר להגביל לפי קשר)
-    res.json({
-      clientId: client._id,
-      username: client.username,
-      weeklyUpdates: client.weeklyUpdates || [],
-    });
+      res.json({
+        clientId: client._id,
+        username: client.username,
+        goalsText: client.goalsText || "",
+        trainingPlan: client.trainingPlan || "",
+        nutritionPlan: client.nutritionPlan || "",
+        weeklyUpdates: client.weeklyUpdates || [],
+      });
+
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+router.put("/client/:id/plans", authMiddleware, async (req, res) => {
+  try {
+    const coach = await User.findById(req.user.userId);
+    if (!coach) return res.status(404).json({ message: "User not found" });
+
+    if (coach.role !== "coach") {
+      return res.status(403).json({ message: "Only coaches can edit client plans" });
+    }
+
+    const { trainingPlan, nutritionPlan } = req.body;
+
+    const client = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        trainingPlan: trainingPlan ?? "",
+        nutritionPlan: nutritionPlan ?? "",
+      },
+      { new: true }
+    ).select("-password");
+
+    if (!client) {
+      return res.status(404).json({ message: "Client not found" });
+    }
+
+    res.json({
+      message: "Plans updated successfully",
+      clientId: client._id,
+      trainingPlan: client.trainingPlan,
+      nutritionPlan: client.nutritionPlan,
+    });
+  } catch (err) {
+    console.error("UPDATE PLANS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 
 module.exports = router;
