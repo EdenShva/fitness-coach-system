@@ -15,7 +15,17 @@ router.post("/", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const { name, goals, notes, username, password } = req.body;
+    // ✅ הוספנו את השדות החדשים כאן
+    const {
+      name,
+      goals,
+      notes,
+      username,
+      password,
+      birthDate,
+      idNumber,
+      address,
+    } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: "Name is required" });
@@ -30,6 +40,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
     let createdUser = null;
 
+    // אם המאמן רוצה גם משתמש שמתחבר למערכת
     if (username && password) {
       const existingUser = await User.findOne({ username });
       if (existingUser) {
@@ -43,7 +54,13 @@ router.post("/", authMiddleware, async (req, res) => {
         email: `${username}@dummy.com`,
         password: hashedPassword,
         role: "client",
+
+        // ✅ השדות החדשים נשמרים על ה-User
+        birthDate: birthDate ? new Date(birthDate) : undefined,
+        idNumber,
+        address,
       });
+
       await createdUser.save();
     }
 

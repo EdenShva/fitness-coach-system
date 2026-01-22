@@ -1,6 +1,3 @@
-// models/User.js
-// User model - used for both coach and client login
-
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -8,11 +5,13 @@ const userSchema = new mongoose.Schema(
     username: {
       type: String,
       required: true,
+      trim: true,
     },
 
     email: {
       type: String,
       unique: true,
+      sparse: true,
     },
 
     password: {
@@ -26,6 +25,25 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    // שדות חדשים
+    birthDate: {
+      type: Date,
+      required: false,
+    },
+
+    idNumber: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+
+    address: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+
+    // תוכניות המאמן
     trainingPlan: {
       type: String,
       default: "",
@@ -41,7 +59,6 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    // היסטוריה שבועית
     weeklyUpdates: [
       {
         date: { type: Date, default: Date.now },

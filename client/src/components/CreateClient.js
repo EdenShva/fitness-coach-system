@@ -8,6 +8,12 @@ function CreateClient() {
   const [newNotes, setNewNotes] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  // שדות חדשים: תאריך לידה, תעודת זהות, כתובת
+  const [birthDate, setBirthDate] = useState("");
+  const [idNumber, setIdNumber] = useState("");
+  const [address, setAddress] = useState("");
+
   const [message, setMessage] = useState("");
 
   const navigate = useNavigate();
@@ -33,6 +39,11 @@ function CreateClient() {
         notes: newNotes,
         username: newUsername || undefined,
         password: newPassword || undefined,
+
+        // שולחים לשרת את השדות החדשים
+        birthDate, // כ-String של date, השרת כבר הופך ל-Date אם צריך
+        idNumber,
+        address,
       });
 
       const data = response.data;
@@ -50,6 +61,9 @@ function CreateClient() {
       setNewNotes("");
       setNewUsername("");
       setNewPassword("");
+      setBirthDate("");
+      setIdNumber("");
+      setAddress("");
 
       // חזרה לרשימת הלקוחות
       navigate("/coach");
@@ -187,6 +201,46 @@ function CreateClient() {
               value={newNotes}
               onChange={(e) => setNewNotes(e.target.value)}
               placeholder="Additional notes"
+            />
+          </div>
+
+          {/* שדות פרטים אישיים */}
+          <hr style={{ margin: "16px 0" }} />
+
+          <h4>פרטים אישיים של הלקוח</h4>
+
+          <div style={{ marginBottom: "10px" }}>
+            <label>תאריך לידה:</label>
+            <br />
+            <input
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              style={{ width: "100%", padding: "6px", marginTop: "4px" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "10px" }}>
+            <label>תעודת זהות:</label>
+            <br />
+            <input
+              type="text"
+              value={idNumber}
+              onChange={(e) => setIdNumber(e.target.value)}
+              placeholder="ID Number"
+              style={{ width: "100%", padding: "6px", marginTop: "4px" }}
+            />
+          </div>
+
+          <div style={{ marginBottom: "10px" }}>
+            <label>כתובת:</label>
+            <br />
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Address"
+              style={{ width: "100%", padding: "6px", marginTop: "4px" }}
             />
           </div>
 
