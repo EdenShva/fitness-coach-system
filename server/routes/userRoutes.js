@@ -33,6 +33,7 @@ router.put("/me", authMiddleware, async (req, res) => {
   }
 });
 
+// POST /api/users/me/weekly-update
 router.post("/me/weekly-update", authMiddleware, async (req, res) => {
   try {
     const { weight, note } = req.body;
@@ -41,7 +42,9 @@ router.post("/me/weekly-update", authMiddleware, async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (user.role !== "client") {
-      return res.status(403).json({ message: "Only clients can add weekly updates" });
+      return res
+        .status(403)
+        .json({ message: "Only clients can add weekly updates" });
     }
 
     user.weeklyUpdates.push({ weight, note });
@@ -55,29 +58,30 @@ router.post("/me/weekly-update", authMiddleware, async (req, res) => {
   }
 });
 
-
+// GET /api/users/client/:id/weekly-updates  (coach views client)
 router.get("/client/:id/weekly-updates", authMiddleware, async (req, res) => {
   try {
     const coach = await User.findById(req.user.userId);
     if (!coach) return res.status(404).json({ message: "User not found" });
 
     if (coach.role !== "coach") {
-      return res.status(403).json({ message: "Only coaches can view client updates" });
+      return res
+        .status(403)
+        .json({ message: "Only coaches can view client updates" });
     }
 
     const client = await User.findById(req.params.id).select("-password");
     if (!client) return res.status(404).json({ message: "Client not found" });
 
-    // MVP פשוט: המאמן יכול לראות כל לקוח (אח"כ אפשר להגביל לפי קשר)
-      res.json({
-        clientId: client._id,
-        username: client.username,
-        goalsText: client.goalsText || "",
-        trainingPlan: client.trainingPlan || "",
-        nutritionPlan: client.nutritionPlan || "",
-        weeklyUpdates: client.weeklyUpdates || [],
-      });
-
+    // MVP פשוט: המאמן יכול לראות כל לקוח
+    res.json({
+      clientId: client._id,
+      username: client.username,
+      goalsText: client.goalsText || "",
+      trainingPlan: client.trainingPlan || "",
+      nutritionPlan: client.nutritionPlan || "",
+      weeklyUpdates: client.weeklyUpdates || [],
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -89,23 +93,20 @@ router.put("/client/:id/plans", authMiddleware, async (req, res) => {
     if (!coach) return res.status(404).json({ message: "User not found" });
 
     if (coach.role !== "coach") {
-      return res.status(403).json({ message: "Only coaches can edit client plans" });
+      return res
+        .status(403)
+        .json({ message: "Only coaches can edit client plans" });
     }
 
     const { trainingPlan, nutritionPlan } = req.body;
 
-    const client = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        trainingPlan: trainingPlan ?? "",
-        nutritionPlan: nutritionPlan ?? "",
-      },
-      { new: true }
-    ).select("-password");
+    const client = await User.findById(req.params.id);
+    if (!client) return res.status(404).json({ message: "Client not found" });
 
-    if (!client) {
-      return res.status(404).json({ message: "Client not found" });
-    }
+    client.trainingPlan = trainingPlan ?? client.trainingPlan;
+    client.nutritionPlan = nutritionPlan ?? client.nutritionPlan;
+
+    await client.save();
 
     res.json({
       message: "Plans updated successfully",
@@ -118,7 +119,5 @@ router.put("/client/:id/plans", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
-
 
 module.exports = router;

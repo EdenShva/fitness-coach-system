@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import api from "../api/api";
 
 function ClientDetails() {
   const { id } = useParams(); // זה ה-id של המשתמש-לקוח (User._id)
@@ -13,74 +14,54 @@ function ClientDetails() {
   useEffect(() => {
     const fetchClientData = async () => {
       setMessage("");
-      const token = localStorage.getItem("token");
 
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/users/client/${id}/weekly-updates`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const res = await api.get(`/api/users/client/${id}/weekly-updates`);
+        const data = res.data;
 
-        const data = await res.json();
-
-        if (res.ok) {
-          setClientInfo(data); // { clientId, username, goalsText, trainingPlan, nutritionPlan, weeklyUpdates: [...] }
-          setTrainingPlan(data.trainingPlan || "");
-          setNutritionPlan(data.nutritionPlan || "");
-        } else {
-          setMessage(data.message || "Failed to load client data");
-        }
+        // data: { clientId, username, goalsText, trainingPlan, nutritionPlan, weeklyUpdates: [...] }
+        setClientInfo(data);
+        setTrainingPlan(data.trainingPlan || "");
+        setNutritionPlan(data.nutritionPlan || "");
       } catch (err) {
         console.error("Error fetching client data:", err);
-        setMessage("Server error");
+        if (err.response) {
+          setMessage(err.response.data?.message || "Failed to load client data");
+        } else {
+          setMessage("Server error");
+        }
       }
     };
 
     fetchClientData();
   }, [id]);
 
-  const handleBack = () => {
-    navigate("/coach");
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const d = new Date(dateString);
-    return d.toLocaleDateString("he-IL");
-  };
-
   const handleSavePlans = async () => {
     setMessage("");
-    const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/users/client/${id}/plans`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ trainingPlan, nutritionPlan }),
-        }
-      );
+      const res = await api.put(`/api/users/client/${id}/plans`, {
+        trainingPlan,
+        nutritionPlan,
+      });
 
-      const data = await res.json();
+      const data = res.data;
+      setMessage("Plans saved successfully");
 
-      if (res.ok) {
-        setMessage("Plans saved successfully");
-      } else {
-        setMessage(data.message || "Failed to save plans");
-      }
+      setTrainingPlan(data.trainingPlan || trainingPlan);
+      setNutritionPlan(data.nutritionPlan || nutritionPlan);
     } catch (err) {
       console.error("Error saving plans:", err);
-      setMessage("Server error");
+      if (err.response) {
+        setMessage(err.response.data?.message || "Failed to save plans");
+      } else {
+        setMessage("Server error");
+      }
     }
+  };
+
+  const handleBack = () => {
+    navigate("/coach");
   };
 
   return (
@@ -122,19 +103,19 @@ function ClientDetails() {
               placeholder="Write the nutrition plan for this client..."
             />
 
-            <button style={{ marginTop: "12px" }} onClick={handleSavePlans}>
-              Save Plans
-            </button>
+            <div style={{ marginTop: "8px" }}>
+              <button onClick={handleSavePlans}>Save Plans</button>
+            </div>
           </div>
 
-          {/* היסטוריית עדכונים שבועיים */}
-          <div style={{ marginTop: "24px", maxWidth: "700px" }}>
+          {/* היסטוריה שבועית */}
+          <div style={{ marginTop: "24px" }}>
             <h3>Weekly Updates</h3>
             {clientInfo.weeklyUpdates && clientInfo.weeklyUpdates.length > 0 ? (
               <ul>
                 {clientInfo.weeklyUpdates.map((update, index) => (
                   <li key={index}>
-                    <strong>{formatDate(update.date)}:</strong>{" "}
+                    {new Date(update.date).toLocaleDateString("he-IL")} -{" "}
                     {update.weight && <span>{update.weight} kg – </span>}
                     {update.note}
                   </li>

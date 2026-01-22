@@ -1,4 +1,5 @@
 import { useState } from "react";
+import api from "../api/api";
 
 function Login() {
   const [identifier, setIdentifier] = useState(""); // email OR username
@@ -10,35 +11,27 @@ function Login() {
     setMessage("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // שולחים "email" כדי לא לשבור את השרת אצלך,
-        // אבל הוא בעצם Email or Username
-        body: JSON.stringify({ email: identifier, password }),
+      const response = await api.post("/api/auth/login", {
+        email: identifier, // שדה email משמש כ-"Email or Username"
+        password: password,
       });
 
-      const data = await response.json();
+      const data = response.data;
       console.log("LOGIN RESPONSE:", data);
-
-      if (!response.ok) {
-        setMessage(data.message || "Login failed");
-        return;
-      }
 
       const token = data.token;
       const role = data.user?.role || data.role;
 
       if (!token || !role) {
-        setMessage("Login response is missing token or role");
+        setMessage("Login response missing token or role");
         return;
       }
 
+      // שמירה לזיכרון דפדפן
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
 
+      // ניתוב לפי תפקיד
       if (role === "coach") {
         window.location.href = "/coach";
       } else if (role === "client") {
@@ -46,9 +39,13 @@ function Login() {
       } else {
         window.location.href = "/";
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      setMessage("Server error");
+    } catch (err) {
+      console.error("LOGIN ERROR:", err);
+      if (err.response) {
+        setMessage(err.response.data.message || "Login failed");
+      } else {
+        setMessage("Server error");
+      }
     }
   };
 
@@ -59,8 +56,8 @@ function Login() {
       <form onSubmit={handleSubmit}>
         <div>
           <input
-            type="text"                  
-            placeholder="Email or Username"  
+            type="text"
+            placeholder="Email or Username"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             required

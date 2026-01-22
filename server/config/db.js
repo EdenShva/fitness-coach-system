@@ -1,3 +1,6 @@
+// config/db.js
+// MongoDB connection helper
+
 const mongoose = require("mongoose");
 
 const connectDB = async () => {

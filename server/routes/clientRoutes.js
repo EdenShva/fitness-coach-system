@@ -25,43 +25,43 @@ router.post("/", authMiddleware, async (req, res) => {
     if ((username && !password) || (!username && password)) {
       return res
         .status(400)
-        .json({
-          message:
-            "If you want to create a login for the client, please provide BOTH username and password",
-        });
+        .json({ message: "Username and password are both required" });
     }
 
     let createdUser = null;
 
     if (username && password) {
-      // לבדוק שאין כבר משתמש כזה
       const existingUser = await User.findOne({ username });
       if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+        return res.status(400).json({ message: "Username already taken" });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      createdUser = await User.create({
+      createdUser = new User({
         username,
-        // אימייל פיקטיבי, ייחודי לפי שם המשתמש
-        email: `${username}@virtual-client.local`,
+        email: `${username}@dummy.com`,
         password: hashedPassword,
         role: "client",
-        goalsText: "",
       });
-
+      await createdUser.save();
     }
 
-    const newClient = await Client.create({
+    // יצירת ישות Client
+    const client = new Client({
       name,
-      goals: goals || "",
-      notes: notes || "",
-      coach: req.user.userId, // המאמן מתוך הטוקן
-      user: createdUser ? createdUser._id : undefined, // 👈 הקישור החשוב ל-User
+      goals,
+      notes,
+      coach: req.user.userId,
+      user: createdUser ? createdUser._id : null,
     });
 
-    res.status(201).json(newClient);
+    await client.save();
+
+    res.status(201).json({
+      message: "Client created successfully",
+      client,
+    });
   } catch (error) {
     console.error("Error creating client:", error);
     res.status(500).json({ message: error.message || "Server error" });

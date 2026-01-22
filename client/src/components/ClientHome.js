@@ -1,192 +1,134 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../api/api";
 
 function ClientHome() {
   const [user, setUser] = useState(null);
-  const [goalsText, setGoalsText] = useState("");
-  const [weeklyWeight, setWeeklyWeight] = useState("");
-  const [weeklyNote, setWeeklyNote] = useState("");
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
-  // Fetch logged-in user data
   useEffect(() => {
     const fetchMe = async () => {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch("http://localhost:5000/api/users/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setUser(data);
-        setGoalsText(data.goalsText || "");
-      } else {
-        setMessage(data.message || "Failed to load profile");
+      try {
+        const res = await api.get("/api/users/me");
+        setUser(res.data);
+      } catch (err) {
+        console.error("Error loading profile:", err);
+        if (err.response) {
+          setMessage(err.response.data?.message || "שגיאה בטעינת פרופיל");
+        } else {
+          setMessage("שגיאת שרת");
+        }
       }
     };
 
     fetchMe();
   }, []);
 
-  // Save goals / feedback
-  const handleSave = async () => {
-    setMessage("");
-    const token = localStorage.getItem("token");
-
-    const res = await fetch("http://localhost:5000/api/users/me", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ goalsText }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setUser(data);
-      setMessage("Goals saved!");
-    } else {
-      setMessage(data.message || "Failed to save goals");
-    }
-  };
-
-  // Submit weekly update
-  const handleWeeklySubmit = async () => {
-    setMessage("");
-    const token = localStorage.getItem("token");
-
-    const res = await fetch("http://localhost:5000/api/users/me/weekly-update", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        weight: weeklyWeight ? Number(weeklyWeight) : null,
-        note: weeklyNote,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setUser(data); // כולל weeklyUpdates מעודכן
-      setWeeklyWeight("");
-      setWeeklyNote("");
-      setMessage("Weekly update saved!");
-    } else {
-      setMessage(data.message || "Failed to save weekly update");
-    }
-  };
-
-  // Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     window.location.href = "/";
   };
 
-  // פונקציה קטנה כדי להציג תאריך יפה
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const d = new Date(dateString);
-    return d.toLocaleDateString("he-IL");
-  };
-
   return (
-    <div style={{ padding: "16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h2>Client Home</h2>
-        <button onClick={handleLogout}>Logout</button>
+    <div
+      style={{
+        padding: "20px",
+        direction: "rtl",
+        fontFamily: "Arial",
+        maxWidth: "1000px",
+        margin: "0 auto",
+      }}
+    >
+      {/* כותרת + יציאה */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <h2 style={{ margin: 0 }}>מסך לקוח</h2>
+        <button onClick={handleLogout}>יציאה</button>
       </div>
 
-      {user ? (
+      {/* כפתורי ניווט למסכים נוספים */}
+      <div
+        style={{
+          marginTop: "12px",
+          display: "flex",
+          gap: "8px",
+          justifyContent: "flex-start",
+        }}
+      >
+        <button onClick={() => navigate("/client/progress")}>
+          עדכון מטרות ושבוע
+        </button>
+        <button onClick={() => navigate("/client/history")}>
+          צפייה בהיסטוריה שבועית
+        </button>
+      </div>
+
+      {/* תוכן ראשי */}
+      {!user ? (
+        <p style={{ marginTop: "20px" }}>{message || "טוען נתונים..."}</p>
+      ) : (
         <>
-          <p>Welcome, {user.username}</p>
+          <p style={{ marginTop: "16px", textAlign: "right" }}>
+            שלום, <strong>{user.username}</strong>
+          </p>
 
-          {/* Training & Nutrition Plans from Coach */}
-          <div style={{ marginTop: "16px", maxWidth: "600px" }}>
-            <h3>Training Plan</h3>
-            <p>{user.trainingPlan || "Your coach hasn't set a training plan yet."}</p>
-          </div>
-
-          <div style={{ marginTop: "16px", maxWidth: "600px" }}>
-            <h3>Nutrition Plan</h3>
-            <p>{user.nutritionPlan || "Your coach hasn't set a nutrition plan yet."}</p>
-          </div>
-
-
-          {/* Goals section */}
-          <div style={{ marginTop: "16px", maxWidth: "600px" }}>
-            <h3>Goals / Feedback</h3>
-            <textarea
-              rows={6}
-              style={{ width: "100%" }}
-              value={goalsText}
-              onChange={(e) => setGoalsText(e.target.value)}
-              placeholder="Write your goals, allergies, preferences, target weight..."
-            />
-            <button style={{ marginTop: "8px" }} onClick={handleSave}>
-              Save Goals
-            </button>
-          </div>
-
-          {/* Weekly update form */}
-          <div style={{ marginTop: "20px", maxWidth: "600px" }}>
-            <h3>Weekly Update</h3>
-
-            <input
-              type="number"
-              placeholder="Weight (kg)"
-              value={weeklyWeight}
-              onChange={(e) => setWeeklyWeight(e.target.value)}
-            />
-
-            <div style={{ marginTop: "8px" }}>
-              <textarea
-                rows={4}
-                style={{ width: "100%" }}
-                placeholder="Weekly note / feedback"
-                value={weeklyNote}
-                onChange={(e) => setWeeklyNote(e.target.value)}
-              />
+          {/* תכנית אימונים ותפריט - שתי תיבות זו ליד זו */}
+          <div
+            style={{
+              display: "flex",
+              gap: "16px",
+              marginTop: "16px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                minWidth: "260px",
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                padding: "12px",
+                background: "#f8f8f8",
+                textAlign: "right",
+              }}
+            >
+              <h3 style={{ marginTop: 0 }}>תכנית אימונים</h3>
+              <p style={{ whiteSpace: "pre-wrap" }}>
+                {user.trainingPlan ||
+                  "המאמן עדיין לא הגדיר עבורך תכנית אימונים."}
+              </p>
             </div>
 
-            <button style={{ marginTop: "8px" }} onClick={handleWeeklySubmit}>
-              Submit Weekly Update
-            </button>
+            <div
+              style={{
+                flex: 1,
+                minWidth: "260px",
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                padding: "12px",
+                background: "#f8f8f8",
+                textAlign: "right",
+              }}
+            >
+              <h3 style={{ marginTop: 0 }}>תפריט תזונה</h3>
+              <p style={{ whiteSpace: "pre-wrap" }}>
+                {user.nutritionPlan ||
+                  "המאמן עדיין לא הגדיר עבורך תפריט תזונה."}
+              </p>
+            </div>
           </div>
 
-          {/* Weekly history list */}
-          <div style={{ marginTop: "24px", maxWidth: "600px" }}>
-            <h3>Weekly History</h3>
-            {user.weeklyUpdates && user.weeklyUpdates.length > 0 ? (
-              <ul>
-                {user.weeklyUpdates
-                  .slice() // שלא נשנה את המערך המקורי
-                  .sort((a, b) => new Date(b.date) - new Date(a.date)) // מהחדש לישן
-                  .map((item, index) => (
-                    <li key={item._id || index} style={{ marginBottom: "8px" }}>
-                      <strong>{formatDate(item.date)}:</strong>{" "}
-                      {item.weight ? `${item.weight} kg` : "No weight"}{" "}
-                      {item.note ? `– ${item.note}` : ""}
-                    </li>
-                  ))}
-              </ul>
-            ) : (
-              <p>No weekly updates yet.</p>
-            )}
-          </div>
-
-          {message && <p>{message}</p>}
+          {message && (
+            <p style={{ marginTop: "16px", textAlign: "right" }}>{message}</p>
+          )}
         </>
-      ) : (
-        <p>{message || "Loading..."}</p>
       )}
     </div>
   );
